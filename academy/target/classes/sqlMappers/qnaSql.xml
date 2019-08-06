@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="qna.notice">
+
+	<select id="qnaCount" resultType="int">
+  		select count(*) from qna where q_idx<![CDATA[>=]]>0
+		<include refid="qnaSearch"></include>		
+  	</select>
+	
+	<!-- QnA main으로 들어가면서 질문글 전체 출력 -->
+  	<select id="qnaAllList" parameterType="HashMap" resultType="aca.qna.model.QnaDTO">
+  		<!--select * from qna order by q_idx desc -->
+			select * from
+			(select d.*,rownum as rnum from
+			(select qna.*,a.c_name,b.st_name,c.r_result from qna  ,
+			(select c_code,c_name from subject)a,
+			(select st_idx,st_name from student)b,
+			(select decode(r_content,null,'','답변완료')as r_result ,q_idx from reply)c
+		where qna.c_code=a.c_code and qna.st_idx=b.st_idx and qna.q_idx=c.q_idx(+) 
+		<include refid="qnaSearch"></include>
+		order by qna.q_idx desc)d)
+		where rnum<![CDATA[>=]]>#{startrow} and rnum<![CDATA[<=]]>#{endrow}
+		
+		
+  	</select>  	
+  		<sql id="qnaSearch">
+		<choose>	 
+			<when test="c_code == 0">								
+			</when>
+			<otherwise>
+				and qna.c_code=#{c_code}
+			</otherwise>
+		</choose>
+	</sql>
+  	
+  	
+  	<!-- QnA main에서  글쓰기 폼으로 이동 -->
+  	<select id="qnaWriteForm" resultType="aca.subject.model.SubjectDTO">
+  		select c_code,c_name from subject order by c_code desc 
+  	</select>
+  	<!-- QnA main에서  글쓰기 기능 -->
+  	<insert id="qnaWrite" parameterType="aca.qna.model.QnaDTO">
+  		insert into qna(q_idx,q_subject,q_content,q_wDate,c_code,st_idx) values(q_idx_seq.nextval,#{q_subject},#{q_content},sysdate,#{c_code},#{st_idx})
+  	</insert>
+  	
+  	<!-- QnA main에서 글제목 클릭 후 Content(글내용) 보기기능 -->
+  	<select id="qnaContent" parameterType="int" resultType="aca.qna.model.QnaDTO" >
+  		select qna.*,subject.c_name,student.st_name from qna,subject,student where
+		qna.c_code=subject.c_code and qna.st_idx=student.st_idx and q_idx=#{q_idx}    		
+  	</select>
+  	
+	<!-- QnA Content에서 삭제 기능 -->
+  	<delete id="qnaContentDel" parameterType="int">
+  		delete from qna where q_idx=#{q_idx}
+  	</delete>
+  	
+  	<!-- QnA Content에서 편집폼으로 이동 기능 -->
+  	<select id="qnaConUpdate" parameterType="int" resultType="aca.qna.model.QnaDTO">
+  		select q_idx,q_subject,q_content,c_code from qna where q_idx=#{q_idx} 
+  		<!-- Content보기 기능과 같음 ,  '글쓰기 폼으로 이동'메서드도 함께 실행됨. -->
+  	</select>
+	<!-- QnA updateForm에서 편집 기능  -->
+  	<update id="qnaConUpdate_ok" parameterType="aca.qna.model.QnaDTO">
+		 update qna set 
+		 	q_subject=#{q_subject}, q_content=#{q_content}, c_code=#{c_code}
+		 where q_idx=#{q_idx}	
+  	</update>
+  	
+  	<!-- QnA 글제목 조회 기능 -->
+  	<select id="qna_search" resultType="aca.qna.model.QnaDTO">
+  		select * from qna where q_subject=#{q_subject} order by q_idx desc
+  		
+  	</select>
+  	
+</mapper>
+
+

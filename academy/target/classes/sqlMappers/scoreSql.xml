@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="aca.score">
+	<select id="sc_select" parameterType="aca.score.model.ScoreDTO" resultType="aca.score.model.ScoreDTO">
+	select * from score where s_date
+	between to_date(#{s_date},'yyyy-mm-dd') 
+	and to_date(#{s_date1},'yyyy-mm-dd')
+	and st_idx=#{st_idx}
+	order by s_date desc
+	</select>
+
+	<select id="sc_selectOne" parameterType="map" resultType="aca.score.model.ScoreDTO">
+	select score.*,student.st_name from score,student where score.s_date=#{s_date} and score.st_idx=#{st_idx} and student.st_idx=#{st_idx}
+	</select>
+	
+	<select id="sc_avgSelect" resultType="aca.score.model.ScoreDTO">
+		select s_date,st_level,
+        trunc(avg(s_kor))as s_kor,
+		trunc(avg(s_eng))as s_eng,
+		trunc(avg(s_mat))as s_mat,
+		trunc(avg(s_soc))as s_soc,
+		trunc(avg(s_sci))as s_sci from
+        (select score.*,st_level from score,student
+        where score.st_idx=student.st_idx(+) and st_level=#{st_level})a
+        where s_date=#{s_date} group by s_date, st_level
+	</select>
+	
+	<select id="sc_selectScore" resultType="hashMap">
+		select score.*,student.st_name from score,student where score.st_idx=#{st_idx} and student.st_idx=#{st_idx}
+	</select>
+	
+	<select id="sc_stSelect" resultType="aca.student.model.StudentDTO">
+		select * from student where st_status='재원' order by st_idx desc
+	</select>
+	<insert id="sc_add" parameterType="aca.score.model.ScoreDTO">
+		insert into score values(#{s_kor},#{s_eng},#{s_mat},#{s_soc},#{s_sci},#{s_cate},#{s_date},#{st_idx})
+	</insert>
+	
+	
+	<!-- 추가 -->
+	<select id="sc_addChk" resultType="aca.score.model.ScoreDTO">
+		select * from score where st_idx=#{st_idx} and s_date=#{s_date}
+	</select> 
+	<select id="sc_stScoreList" resultType="aca.score.model.ScoreDTO">
+		select * from score where st_idx=#{st_idx} order by s_date desc
+	</select>
+	<update id="sc_stScoreUpdate" parameterType="aca.score.model.ScoreDTO">
+		update score set s_kor=#{s_kor}, s_eng=#{s_eng}, s_mat=#{s_mat}, s_soc=#{s_soc}, s_sci=#{s_sci} 
+		where st_idx=#{st_idx} and s_date=#{s_date}
+	</update>
+	<select id="sc_stSelect2" resultType="aca.student.model.StudentDTO">
+		select * from student where st_name like '%'||#{st_name}||'%' and st_status='재원' order by st_idx desc
+	</select>
+	<delete id="sc_del" parameterType="HashMap">
+		delete from score where st_idx=#{st_idx} and s_date=#{s_date}
+	</delete>
+</mapper>

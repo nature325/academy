@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="aca.reci">
+	<!-- 첫화면 리스트 -->
+	<select id="reciList" parameterType="String" resultType="aca.joindto.model.SubjectDTO">
+		select * from subject where c_sdate like #{ymstr}||'%'
+	</select>
+	
+	<!-- 강좌명, 강사명, 수강료 받아오는 쿼리 -->
+	<select id="subtc" parameterType="Map" resultType="aca.joindto.model.SubTcDTO">
+		select sub.tc_idx, sub.st_idxs, tc.tc_name, sub.c_name, sub.c_price, sub.c_code
+		from subject sub, teacher tc
+		where tc.tc_idx=#{tc_idx} and sub.c_name=#{c_name}
+	</select>
+	
+	<!-- 수강생 정보 받아오는 쿼리 -->
+	<select id="stList" parameterType="Map" resultType="aca.joindto.model.SubReciStDTO">
+		select pay.p_st_idx, sum(pay.p_pay) as p_pay, student.st_name, student.st_idx, subject.c_code,
+		case when sum(pay.p_pay) = 0 then '미납'
+		when subject.c_price = sum(pay.p_pay) then '완납'
+		when <![CDATA[subject.c_price < sum(pay.p_pay) then '초과']]>
+		else '미납' end p_state
+		from pay, subject, student
+		where subject.c_code = #{c_code}
+		and pay.c_code = subject.c_code(+)
+		and pay.p_st_idx = student.st_idx(+)
+		and student.st_idx = #{st_idx}
+		group by pay.p_st_idx, subject.c_price, student.st_name, student.st_idx, subject.c_code
+	</select>
+	
+	<!-- 개인 납부내역 쿼리 -->
+	<select id="personalReciList" parameterType="String" resultType="aca.joindto.model.StPayDTO">
+		select st.st_name, st.st_idx, pay.*
+		from pay, student st
+		where pay.p_st_idx=#{st_idx} and pay.p_pay != 0 and pay.p_st_idx=st.st_idx and pay.c_code = #{c_code}
+		order by p_idx desc
+	</select>
+	
+	<!-- addForm으로 넘어가는 파라미터 쿼리 -->
+	<select id="addParam" parameterType="Map" resultType="aca.joindto.model.SubTcDTO">
+		select subject.c_name, subject.c_price, student.st_name, student.st_idx, subject.c_code
+		from subject, student
+		where subject.st_idxs like '%'||#{st_idx}||'%' and st_idx=#{st_idx} and subject.c_code=#{c_code}
+	</select>
+	
+	<!-- 수납등록 쿼리 -->
+	<insert id="recieveAdd" parameterType="aca.joindto.model.StPayDTO">
+		insert into pay values(p_idx_seq.nextval, '미납', #{p_payment}, #{p_pay},#{p_paydate}, #{p_st_idx}, #{c_code}, #{p_bigo})
+	</insert>
+	
+	<!-- updateForm으로 넘어가는 파라미터 쿼리 -->
+	<select id="upParam" parameterType="Map" resultType="aca.joindto.model.SubStPayDTO">
+		select subject.c_name, subject.c_price, student.st_name, pay.*
+		from subject, student, pay
+		where subject.c_code=#{c_code} and student.st_idx=#{st_idx} and
+		subject.c_code=pay.c_code and pay.p_st_idx = student.st_idx and pay.p_idx=#{p_idx}
+	</select>
+	
+	<!-- 수납편집 쿼리 -->
+	<update id="recieveUpdate" parameterType="aca.recieve.model.RecieveDTO">
+		update pay
+		set p_paydate=#{p_paydate}, p_payment=#{p_payment}, p_pay=#{p_pay}, p_bigo=#{p_bigo}
+		where p_idx=#{p_idx}
+	</update>
+	
+	<!-- 수납삭제 쿼리 -->
+	<delete id="recieveDel" parameterType="String">
+		delete from pay where p_idx=#{p_idx}
+	</delete>
+	
+	<!-- 개인학생 총 납부금액 -->
+	<select id="stRecieveAllList" parameterType="Map" resultType="aca.joindto.model.SubReciDTO">
+		select a.*, b.p_pay from
+		(select c_code, c_name, c_price, c_sdate, c_edate from subject where st_idxs like '%'||#{st_idx}||'%')a,
+		(select c_code, sum(p_pay) as p_pay from pay
+		where p_st_idx=#{st_idx} and p_paydate like #{ymstr}||'%' group by c_code)b
+		where b.c_code=a.c_code(+)
+	</select>
+	
+	<!-- 개인학생 세부 납부금액 -->
+	<select id="stRecieveDetailList" parameterType="Map" resultType="aca.joindto.model.SubReciDTO">
+		select a.*, b.p_pay, b.p_paydate from
+		(select c_code, c_name, c_price, c_sdate, c_edate from subject where st_idxs like '%'||#{st_idx}||'%')a,
+		(select c_code, p_pay, p_paydate from pay
+		where p_st_idx=#{st_idx} and p_paydate like #{ymstr}||'%' and c_code=#{c_code})b
+		where b.c_code=a.c_code(+)
+	</select>
+	
+	<!-- 모든 강좌 납부금액 -->
+	<select id="stRecievePdfList" parameterType="Map" resultType="aca.joindto.model.SubReciDTO">
+		select a.*, b.p_pay, b.p_paydate from
+		(select c_code, c_name, c_price, c_sdate, c_edate from subject where st_idxs like '%'||#{st_idx}||'%')a,
+		(select c_code, p_pay, p_paydate from pay
+		where p_st_idx=#{st_idx} and p_paydate like #{ymstr}||'%')b
+		where b.c_code=a.c_code(+)
+	</select>
+</mapper>

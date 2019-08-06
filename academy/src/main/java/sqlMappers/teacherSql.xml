@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="aca.teach">
+	<select id="tc_allSelect" resultType="aca.teacher.model.TeacherDTO">
+		select * from teacher order by tc_idx desc
+	</select>
+	
+	<select id="tc_select" parameterType="String" resultType="aca.teacher.model.TeacherDTO">
+		select * from teacher where tc_name like '%'||#{tc_name}||'%' order by tc_idx desc
+	</select>
+	
+	<select id="tc_selectOne" resultType="aca.teacher.model.TeacherDTO">
+		select * from teacher where tc_idx=#{tc_idx}
+	</select>
+	
+	<insert id="tc_add" parameterType="aca.teacher.model.TeacherDTO">
+		insert into teacher values(tc_idx_seq.nextval, #{tc_id},#{tc_pwd},#{tc_name},#{tc_gen},#{tc_tel},#{tc_addr},#{tc_school},#{tc_memo})
+	</insert>
+	
+	<update id="tc_update" parameterType="aca.teacher.model.TeacherDTO">
+		update teacher set tc_name=#{tc_name}, tc_tel=#{tc_tel}, tc_addr=#{tc_addr}, tc_school=#{tc_school}, tc_memo=#{tc_memo}, tc_gen=#{tc_gen} where tc_idx=#{tc_idx}
+	</update>
+	
+	<delete id="tc_del">
+		delete from teacher where tc_idx=#{tc_idx}
+	</delete>
+	
+	<select id="tc_subList" resultType="aca.teacher.model.TeacherDTO">
+		select subject.*,teacher.tc_name from subject,teacher where subject.tc_idx=teacher.tc_idx and subject.tc_idx=#{tc_idx}
+	</select>
+</mapper>

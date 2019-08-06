@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="aca.subject">
+	<select id="subject_selectByDate" parameterType="Map" resultType="aca.teacher.model.TeacherDTO">
+select subject.*,tc_name
+from teacher,subject
+where teacher.tc_idx=subject.tc_idx 
+and to_date(#{date},'yyyy-mm-dd') between to_date(c_sdate,'yyyy-mm-dd') and to_date(c_edate,'yyyy-mm-dd') 
+and c_day like #{day}
+	</select>
+	
+	
+	
+	<!--sy -->
+	<select id="subject_allselect" resultType="HashMap">
+		select subject.*, tc_name from subject,teacher where subject.tc_idx=teacher.tc_idx order by c_code desc
+	</select>
+	
+	<select id="sub_select" parameterType="map" resultType="HashMap">
+		select subject.*, tc_name from subject,teacher where ${cho} like '%'||#{name}||'%' and subject.tc_idx = teacher.tc_idx order by c_code desc
+	</select>
+	
+	<insert id="sub_add" parameterType="aca.subject.model.SubjectDTO">
+		insert into subject values(c_code_seq.nextval,#{c_name},#{c_maxp},0,#{c_price},#{c_day},#{c_mon},#{c_mon1},#{c_tue},#{c_tue1},#{c_wedn},#{c_wedn1},
+		#{c_thur},#{c_thur1},#{c_fri},#{c_fri1},#{c_sat},#{c_sat1},#{c_sun},#{c_sun1},#{c_place},#{c_sdate},#{c_edate},#{c_memo},#{tc_idx},null)
+	</insert>
+	
+	<select id="sub_selectOne" parameterType="int" resultType="aca.teacher.model.TeacherDTO">
+		select subject.*, tc_name from subject,teacher where subject.tc_idx=teacher.tc_idx and c_code=#{c_code}
+	</select>
+	
+	<update id="sub_update" parameterType="aca.teacher.model.TeacherDTO">
+		update subject set c_name=#{c_name}, c_maxp=#{c_maxp}, c_nowp=#{c_nowp}, c_price=#{c_price}, c_day=#{c_day}, c_mon=#{c_mon}, c_mon1=#{c_mon1}, c_tue=#{c_tue}, c_tue1=#{c_tue1},
+		c_wedn=#{c_wedn}, c_wedn1=#{c_wedn1}, c_thur=#{c_thur}, c_thur1=#{c_thur1}, c_fri=#{c_fri}, c_fri1=#{c_fri1}, c_sat=#{c_sat}, c_sat1=#{c_sat1},
+		c_sun=#{c_sun}, c_sun1=#{c_sun1}, c_place=#{c_place}, c_sdate=#{c_sdate}, c_edate=#{c_edate}, c_memo=#{c_memo}, tc_idx=#{tc_idx} where c_code=#{c_code}
+	</update>
+	
+	<delete id="sub_del">
+		delete from subject where c_code=#{c_code}
+	</delete>
+	
+	<select id="select_tc" resultType="aca.teacher.model.TeacherDTO">
+		select tc_name,tc_idx from teacher order by tc_idx desc
+	</select>
+	
+	
+	
+</mapper>

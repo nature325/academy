@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="aca.notice">
+
+	<!--공지사항 리스트 -->
+	<select id="noti_listAll"
+		resultType="aca.notice.model.NoticeDTO">
+		select * from
+		(select a.*,rownum as rnum from
+		(select notice.*,c_name
+		from notice,
+		subject
+		where notice.c_code=subject.c_code(+) and n_head
+		like '%'||#{n_head}||'%'
+		order by n_idx desc)a
+
+		<include refid="search"></include>
+		)
+		where rnum<![CDATA[>=]]>#{start}
+		and rnum<![CDATA[<=]]>#{end}
+		order by rnum asc
+
+
+	</select>
+
+	<!-- 공지사항 글 갯수 -->
+	<select id="count" resultType="int">
+		select count(*) from notice
+		<include refid="search"></include>
+		and n_head like '%'||#{n_head}||'%'
+	</select>
+
+
+	<!-- 공지사항 검색 -->
+	<sql id="search">
+		<choose>
+			<when test="searchOption == 'all'">
+				where n_content like '%'|| #{keyword}||'%'
+				or n_subject like '%'|| #{keyword}||'%'
+			</when>
+			<otherwise>
+				where ${searchOption} like '%'||#{keyword}||'%'
+			</otherwise>
+		</choose>
+	</sql>
+
+
+
+
+
+	<!-- 강좌 리스트 불러오기 -->
+	<select id="notice_subList"
+		resultType="aca.subject.model.SubjectDTO">
+		select c_name,c_code from subject order by c_name asc
+	</select>
+
+	<!-- 작성 -->
+	<insert id="noti_insert">
+		insert into notice values
+		(notice_seq.nextval,#{n_head},#{n_subject},#{n_content},sysdate,#{c_code})
+	</insert>
+
+
+		<!-- 내용출력 -->
+	<select id="noti_content" resultType="aca.notice.model.NoticeDTO">
+		select * from notice
+		where n_idx =
+		#{n_idx}
+	</select>
+
+
+	<!-- 수정 리스트 -->
+	<select id="noti_view" resultType="aca.notice.model.NoticeDTO">
+		select * from notice
+		where
+		n_idx =
+		#{n_idx}
+	</select>
+	
+	<!-- 수정 -->
+	<update id="noti_update">
+		update notice set
+		n_subject =
+		#{n_subject},
+		n_content =
+		#{n_content}
+		where n_idx = #{n_idx}
+	</update>
+	
+	<!-- 삭제 -->
+	<delete id="noti_delete">
+		delete from notice
+		where n_idx = #{n_idx}
+	</delete>
+
+</mapper>

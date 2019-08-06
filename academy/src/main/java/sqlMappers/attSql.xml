@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="aca.notice">
+<select id="att_showRelSt" parameterType="Map" resultType="HashMap">
+	select * from
+	(select st_idx,st_name from student where st_idx=#{idx[0]}
+	<foreach item="listItem" collection="idx" index="index">
+		or st_idx=#{listItem}
+	</foreach>
+	)a,(select st_idx,att_divide,att_date,att_bigo,c_code 
+	from attendance where (c_code=#{code} or c_code is null) and (to_char(att_date,'yyyy-mm-dd')=to_char(#{date}) or att_date is null))b
+	where a.st_idx=b.st_idx(+)
+	order by st_name asc
+</select>
+
+
+<insert id="att_update" parameterType="aca.att.model.AttDTO">
+	merge into attendance
+	 using dual
+	on (st_idx=#{st_idx} and c_code=#{c_code} and to_char(att_date,'yyyy-mm-dd')=#{att_date})
+ 
+	when matched then
+    update set
+    att_divide=#{att_divide},
+    att_bigo=#{att_bigo}
+	when not matched then   
+    insert values(#{st_idx},#{c_code},#{att_bigo},#{att_divide},to_date(#{att_date},'yyyy-mm-dd'))  	
+</insert>
+
+
+<insert id="att_checkAll" parameterType="Map">
+	merge into attendance
+	using dual
+	on (st_idx=#{st_idx} and c_code=#{c_code} and to_char(att_date,'yyyy-mm-dd')=#{att_date})
+ 
+	when matched then
+    update set
+    att_divide='출석'   
+	when not matched then   
+    insert values(#{st_idx},#{c_code},null,'출석',to_date(#{att_date},'yyyy-mm-dd'))	
+</insert>
+
+<select id="att_showRelStAtt" parameterType="Map" resultType="HashMap">
+		select a.*,b.* from 
+	(select * from
+	(select to_char(to_date(#{c_sdate},'YYYY-MM-DD')+(level-1),'yyyy-mm-dd')as nal
+	,TO_CHAR(TO_DATE(#{c_sdate}, 'YYYY-MM-DD')+(LEVEL-1), 'DY','nls_date_language=KOREAN')as day
+	from dual
+	connect by level <![CDATA[<=]]>to_date(#{c_edate},'YYYY-MM-DD')-to_date(#{c_sdate},'YYYY-MM-DD')+1)a
+	where day like #{c_day[0]} 
+	<foreach item="listItem" collection="c_day" index="index">
+		or day like #{listItem}
+	</foreach>
+	)a,(select st_idx,att_divide,att_date from attendance where st_idx=#{st_idx} and c_code=#{c_code})b
+	where a.nal=(to_char(b.att_date(+),'YYYY-MM-DD')) order by nal asc
+</select>
+<select id="att_st_subList" parameterType="String" resultType="aca.subject.model.SubjectDTO">
+	select a.*,b.c_maxp from
+	(select c_name,c_sdate,c_edate,c_code,c_day from subject where st_idxs like '%'||#{st_idx}||'%')a,
+	(select c_code,count(att_divide) as c_maxp from attendance where st_idx=#{st_idx} and 
+	(att_divide='출석' or att_divide='지각' or att_divide='조퇴') 
+	group by c_code)b
+	where a.c_code=b.c_code(+)
+</select>
+<select id="att_st_attList" parameterType="Map" resultType="HashMap">
+	select a.*,att_divide,att_bigo from
+	(select * from
+	(select to_char(to_date(#{c_sdate},'yyyy-mm-dd')+level-1,'yyyy-mm-dd') as att_date,
+	to_char(to_date(#{c_sdate},'yyyy-mm-dd')+level-1,'dy','nls_date_language=KOREAN') as day
+	from dual
+	connect by level <![CDATA[<=]]>to_date(#{c_edate},'yyyy-mm-dd')-to_date(#{c_sdate},'yyyy-mm-dd')+1)
+	where day=#{day[0]}
+	<foreach item="listItem" collection="day" index="index">
+		or day=#{listItem}
+	</foreach>
+	
+	)a,
+	(select att_divide,att_bigo,att_date from attendance where st_idx=#{st_idx} and c_code=#{c_code})b
+	where a.att_date=b.att_date(+) order by a.att_date asc
+</select>
+<select id="att_st_subjectInfo" parameterType="String" resultType="aca.subject.model.SubjectDTO">
+	select c_code,c_name,c_maxp,c_price,c_day,c_mon,c_mon1,c_tue,c_tue1,c_wedn,c_wedn1,c_thur,c_thur1,
+c_fri,c_fri1,c_sat,c_sat1,c_sun,c_sun1,c_place,c_sdate,c_edate,c_memo,tc_name as st_idxs from subject,teacher 
+where subject.tc_idx=teacher.tc_idx and c_code=#{c_code}
+</select>
+	
+	
+</mapper>

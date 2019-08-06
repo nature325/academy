@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<mappers>
+		<mapper resource="sqlMappers/acaSql.xml"/>
+		<mapper resource="sqlMappers/subjectSql.xml"/>
+		<mapper resource="sqlMappers/attSql.xml"/>
+		<mapper resource="sqlMappers/studentSql.xml"/>		
+		<mapper resource="sqlMappers/teacherSql.xml"/>
+		<mapper resource="sqlMappers/scoreSql.xml"/>
+		<mapper resource="sqlMappers/qnaSql.xml"/>		
+		<mapper resource="sqlMappers/reciSql.xml"/>
+		<mapper resource="sqlMappers/noticeSql.xml"/>		
+		<mapper resource="sqlMappers/replySql.xml"/>		
+	</mappers>
+</configuration>
